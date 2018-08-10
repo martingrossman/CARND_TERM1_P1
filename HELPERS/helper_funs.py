@@ -68,11 +68,15 @@ def region_of_interest(img, vertices):
 
 
 #plot fun
-def plot_imfiles(imnames_lst,images_im,cmap=None):
-    plt.figure(figsize=(7, 12))
+def plot_imfiles(imnames_lst,images_im,cmap=None,title=''):
+    plt.figure(figsize=(7, 13),)
+    plt.subplots_adjust(left=0.05 , bottom=0.05, right=0.99, top=0.92,
+                    wspace=0.25, hspace=0.35)
+
+    plt.suptitle(title)
 
     for idx, (im_name, image_im) in enumerate(zip(imnames_lst, images_im)):
         plt.subplot(len(imnames_lst),2,idx+1)
         plt.title(im_name)
         plt.imshow(image_im,cmap=cmap)
-    plt.tight_layout()
+    #plt.tight_layout()

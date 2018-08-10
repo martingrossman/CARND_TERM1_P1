@@ -47,7 +47,7 @@ for idx, (im_name, im_path) in enumerate(zip(test_images_lst, test_images_fullpa
 hf.plot_imfiles(test_images_lst,images_im)
 hf.plot_imfiles(test_images_lst,images_gs,'gray')
 hf.plot_imfiles(test_images_lst,images_ed,'gray')
-hf.plot_imfiles(test_images_lst,images_gb,'gray')
+hf.plot_imfiles(test_images_lst,images_gb,'gray','aaaa')
 
 
 
