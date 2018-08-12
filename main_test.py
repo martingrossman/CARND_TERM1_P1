@@ -60,7 +60,7 @@ plt.show()
 # for each filter add parameters
 filters_funs_d=OrderedDict(); #needs to be ordered to fix the order (no need in 3.6 up)
 filters_funs_d[hf.grayscale] = 'none'
-filters_funs_d[hf.gaussian_blur] = (9,) #needs to be tuple
+filters_funs_d[hf.gaussian_blur] = (9,) #needs to be tuple ()
 filters_funs_d[hf.canny] = (100,200)
 
 
@@ -103,5 +103,24 @@ def plot_improcsess(image_file, img_name ='', filters_funs_lst=[], fgs=(20, 10))
             args=v
             image_temp = f(image_temp,*args)
             plt.imshow(image_temp,cmap=cmap)
+
+def improcsess(image_file, img_name ='', filters_funs_lst=[]):
+    image_pipe_lst =[]
+    cmap=None
+    img= mpimg.imread(image_file)
+    image_temp=img
+    image_pipe_lst.append(image_temp)
+
+    for idx,(f,v) in enumerate(filters_funs_d.items()):
+        if v == 'none':
+            image_temp = f(image_temp)
+            image_pipe_lst.append(image_temp)
+        else:
+            args=v
+            image_temp = f(image_temp,*args)
+            image_pipe_lst.append(image_temp)
+    return image_pipe_lst
+
+improcsess(test_images_fullpath_list[0],test_images_lst[0],filters_funs_d)
 
 plot_improcsess(test_images_fullpath_list[0],test_images_lst[0],filters_funs_d)
