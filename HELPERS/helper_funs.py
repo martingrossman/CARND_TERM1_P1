@@ -5,9 +5,8 @@ import os
 import cv2
 import matplotlib.pyplot as plt
 import numpy as np
-
-def print_hello():
-    print('hello worlds')
+from moviepy.editor import VideoFileClip
+from IPython.display import HTML
 
 # def create_fullpath_lst(dirpath):
 #
@@ -16,6 +15,23 @@ def print_hello():
 #     # for file_name in os.listdir(dirpath):
 #     #     fullpath_lst.append(os.path.join(dirpath, file_name))
     # return fullpath_lst
+def process_video(video_in_path,video_out_path,pipeline,show_video=True):
+
+
+    clip_in = VideoFileClip(video_in_path)
+    clip_frame = clip_in.fl_image(pipeline)
+    clip_frame.write_videofile(video_out_path, audio=False)
+    if show_video :
+        return(
+
+        HTML("""
+        <video width="960" height="540" controls>
+          <source src="{0}">
+        </video>
+        """.format(video_out_path)))
+
+
+
 
 def dir_content_lst(dir_path):
     return [image for image in os.listdir(dir_path)]
@@ -65,6 +81,19 @@ def region_of_interest(img, vertices):
     # returning the image only where mask pixels are nonzero
     masked_image = cv2.bitwise_and(img, mask)
     return masked_image
+
+
+def select_rgb_yellow(image):
+    # white color mask
+    # yellow color mask
+    lower = np.uint8([190, 190, 0])
+    upper = np.uint8([255, 255, 255])
+    yellow_mask = cv2.inRange(image, lower, upper)
+    # combine the mask
+    # mask = cv2.bitwise_or(white_mask, yellow_mask)
+
+    masked = cv2.bitwise_and(image, image, mask=yellow_mask)
+    return masked
 
 
 #plot fun
