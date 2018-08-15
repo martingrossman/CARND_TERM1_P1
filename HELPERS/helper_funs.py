@@ -15,7 +15,8 @@ from IPython.display import HTML
 #     # for file_name in os.listdir(dirpath):
 #     #     fullpath_lst.append(os.path.join(dirpath, file_name))
     # return fullpath_lst
-def process_video(video_in_path,video_out_path,pipeline,show_video=True):
+
+def process_video(video_in_path, video_out_path, pipeline, show_video=True):
 
 
     clip_in = VideoFileClip(video_in_path)
@@ -23,7 +24,6 @@ def process_video(video_in_path,video_out_path,pipeline,show_video=True):
     clip_frame.write_videofile(video_out_path, audio=False)
     if show_video :
         return(
-
         HTML("""
         <video width="960" height="540" controls>
           <source src="{0}">
