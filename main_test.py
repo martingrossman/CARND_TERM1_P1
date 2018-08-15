@@ -35,6 +35,7 @@ if (gbsize%2==0):
 
 
 def process_filters(image_in, image_name_in, filters_dict):
+    # process image in by applying filters in filters_dict
     image_temp = image_in
     image_process_pipe_lst = [(image_in, image_name_in)]
     # if no filtering funs
@@ -52,7 +53,7 @@ def process_filters(image_in, image_name_in, filters_dict):
 
 
 def plot_filters(image_pipe_lst, fgs=(20, 10)):
-
+    # plot filter for one image
     colormap = None
     cols = len(image_pipe_lst)
     plt.figure(figsize=fgs)
@@ -67,7 +68,7 @@ def plot_filters(image_pipe_lst, fgs=(20, 10)):
 
 
 def plot_pipes(processed_images_lst, fgs=(20, 15)):
-
+    # plots filters on all images in processed_images_lst
     rows = len(processed_images_lst)
     cols = len(processed_images_lst[0])
     plt.figure(figsize=fgs)
