@@ -3,8 +3,8 @@ from HELPERS import helper_funs as hf
 # importing some useful packages
 import matplotlib.image as mpimg
 from collections import OrderedDict
-import cv2
 import numpy as np
+from operator import itemgetter
 
 # read data
 test_images_dir = 'test_images/'
@@ -23,19 +23,29 @@ if (gbsize%2==0):
     print('gbsize is',gbsize,', change to odd number!')
     gbsize = gbsize + 1
 
-
-
-
+hough_rho = 1
+hough_theta = np.pi / 180
+hough_threshold = 20
+hough_min_line_length = 40
+hough_max_line_gap = 200
+lines_previous =np.array([])
 
 
 # ad image processing filters to create ordered pipeline as ordered dict
 # for each filter add parameters
-filters_funs_d = OrderedDict() #needs to be ordered to fix the order (no need in 3.6 up)
-filters_funs_d[hf.select_white_yellow_L] ='none'
+# needs to be ordered to fix the order (no need in 3.6 up)
+filters_funs_d = OrderedDict()
+
+filters_funs_d[hf.select_white_yellow_L] = 'none'
 filters_funs_d[hf.grayscale] = 'none'
-filters_funs_d[hf.gaussian_blur] = (9,) #needs to be tuple ()
-filters_funs_d[hf.canny] = (100,200)
+filters_funs_d[hf.gaussian_blur] = (gbsize,) #needs to be tuple ()
+filters_funs_d[hf.canny] = (canny_low, canny_high)
 filters_funs_d[hf.region_of_interest] = 'none'
+filters_funs_d[hf.hough_lines] = (hough_rho, hough_theta, hough_threshold,
+                                 hough_min_line_length, hough_max_line_gap, lines_previous)
+filters_funs_d[hf.weighted_img] = 'image'
+# result
+
 
 # create image list
 image_list = []
@@ -56,4 +66,6 @@ print(len(processed_images_lst))
 print(len(processed_images_lst[0]))
 
 
-hf.plot_pipes(processed_images_lst, fgs=(20, 10))
+b=(0, 1, 2, 6)
+processed_images_lst_sel = [itemgetter(*b)(sublist) for sublist in processed_images_lst]
+hf.plot_pipes(processed_images_lst_sel, fgs=(20, 10))
