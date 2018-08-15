@@ -44,28 +44,22 @@ filters_funs_d[hf.region_of_interest] = 'none'
 filters_funs_d[hf.hough_lines] = (hough_rho, hough_theta, hough_threshold,
                                  hough_min_line_length, hough_max_line_gap, lines_previous)
 filters_funs_d[hf.weighted_img] = 'image'
-# result
-
 
 # create image list
-image_list = []
-image_name_list = []
-for idx, image_file in enumerate(test_images_fullpath_list):
+image_list = [mpimg.imread(test_images_fullpath_list[idx])
+              for idx, image_file in enumerate(test_images_fullpath_list)]
+# create image names list
+image_name_list = [str(test_images_fullpath_list[idx]).split('/')[1]
+                   for idx, image_file in enumerate(test_images_fullpath_list)]
 
-    image_list.append(mpimg.imread(test_images_fullpath_list[idx]))
-    image_name_list.append(str(test_images_fullpath_list[idx]).split('/')[1])
 
 # Processing
-processed_images_lst=[]
-for image,image_name in zip(image_list, image_name_list):
-    processed_images_lst.append(hf.process_filters(image, image_name, filters_funs_d))
+# For each image in image list run process_filters to apply pipeline
+processed_images_lst=[hf.process_filters(image, image_name, filters_funs_d)
+                      for image, image_name in zip(image_list, image_name_list)]
 
 
-
-print(len(processed_images_lst))
-print(len(processed_images_lst[0]))
-
-
-b=(0, 1, 2, 6)
+# Printing
+b=(0, 1, 2, 7) # select which filter to plot
 processed_images_lst_sel = [itemgetter(*b)(sublist) for sublist in processed_images_lst]
 hf.plot_pipes(processed_images_lst_sel, fgs=(20, 10))

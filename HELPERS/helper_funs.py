@@ -166,7 +166,7 @@ def plot_imfiles(imnames_lst,images_im,cmap=None,title=''):
         plt.imshow(image_im,cmap=cmap)
     #plt.tight_layout()
 
-def process_filters(image_in, image_name_in, filters_dict):
+def process_filters(image_in, image_name_in='name', filters_dict=[]):
     # process image in by applying filters in filters_dict
     image_temp = image_in
     image_process_pipe_lst = [(image_in, image_name_in)]
