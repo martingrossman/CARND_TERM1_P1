@@ -31,7 +31,7 @@ hough_max_line_gap = 200
 lines_previous =np.array([])
 
 
-# ad image processing filters to create ordered pipeline as ordered dict
+# add image processing filters to create ordered pipeline as ordered dict
 # for each filter add parameters
 # needs to be ordered to fix the order (no need in 3.6 up)
 filters_funs_d = OrderedDict()
