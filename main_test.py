@@ -58,7 +58,7 @@ if (gbsize%2==0):
 
 # ad image processing filters to create ordered pipeline as ordered dict
 # for each filter add parameters
-filters_funs_d=OrderedDict(); #needs to be ordered to fix the order (no need in 3.6 up)
+filters_funs_d = OrderedDict() #needs to be ordered to fix the order (no need in 3.6 up)
 
 filters_funs_d[hf.grayscale] = 'none'
 filters_funs_d[hf.gaussian_blur] = (9,) #needs to be tuple ()
@@ -81,63 +81,64 @@ filters_funs_d[hf.canny] = (100,200)
 # test_images_fullpath_list[1]
 # ################
 #
-def plot_improcsess(image_file, img_name ='', filters_funs_lst=[], fgs=(20, 10)):
-
-    cmap=None
-    img= mpimg.imread(image_file)
-    cols= len(filters_funs_lst)+1
-
-    plt.figure(figsize=fgs)
-
-    plt.subplot(1, cols, 1)
-    plt.title(img_name)
-    plt.imshow(img)
-    image_temp=img
-
-
-    for idx,(f,v) in enumerate(filters_funs_d.items()):
-        # funs
-        print(image_temp.shape)
-        #print(idx,f)
-        plt.subplot(1, cols, idx+2)
-        plt.title(f.__name__)
-        cmap = 'gray' if len(image_temp.shape) == 2 else cmap
-
-
-        if v == 'none':
-            image_temp = f(image_temp)
-            plt.imshow(image_temp,cmap=cmap)
-        else:
-            #print(v)
-            #print(type(v))
-            args=v
-            image_temp = f(image_temp,*args)
-            plt.imshow(image_temp,cmap=cmap)
-
-def improcsess_filters(image_file, img_name ='', filters_funs_d=[]):
-    image_pipe_lst = []
-    cmap = None
-    img = mpimg.imread(image_file)
-    image_temp = img
-    image_pipe_lst.append(image_temp)
-
-    for idx,(f,v) in enumerate(filters_funs_d.items()):
-        if v == 'none':
-            image_temp = f(image_temp)
-            image_pipe_lst.append(image_temp)
-            args=v
-            image_temp = f(image_temp,*args)
-            image_pipe_lst.append(image_temp)
-    return image_pipe_lst
+# def plot_improcsess(image_file, img_name ='', filters_funs_lst=[], fgs=(20, 10)):
+#
+#     cmap=None
+#     img= mpimg.imread(image_file)
+#     cols= len(filters_funs_lst)+1
+#
+#     plt.figure(figsize=fgs)
+#
+#     plt.subplot(1, cols, 1)
+#     plt.title(img_name)
+#     plt.imshow(img)
+#     image_temp=img
+#
+#
+#     for idx,(f,v) in enumerate(filters_funs_d.items()):
+#         # funs
+#         print(image_temp.shape)
+#         #print(idx,f)
+#         plt.subplot(1, cols, idx+2)
+#         plt.title(f.__name__)
+#         cmap = 'gray' if len(image_temp.shape) == 2 else cmap
+#
+#
+#         if v == 'none':
+#             image_temp = f(image_temp)
+#             plt.imshow(image_temp,cmap=cmap)
+#         else:
+#             #print(v)
+#             #print(type(v))
+#             args=v
+#             image_temp = f(image_temp,*args)
+#             plt.imshow(image_temp,cmap=cmap)
+#
+# def improcsess_filters(image_file, img_name ='', filters_funs_d=[]):
+#     image_pipe_lst = []
+#     cmap = None
+#     img = mpimg.imread(image_file)
+#     image_temp = img
+#     image_pipe_lst.append(image_temp)
+#
+#     for idx,(f,v) in enumerate(filters_funs_d.items()):
+#         if v == 'none':
+#             image_temp = f(image_temp)
+#             image_pipe_lst.append(image_temp)
+#             args=v
+#             image_temp = f(image_temp,*args)
+#             image_pipe_lst.append(image_temp)
+#     return image_pipe_lst
 
 
 # process image through all filters funs in filters_dict
-# input is image, output is lst of processed images with their names
+# input is image, output is lst of processed image with their names
 # image_process_pipe_lst = [(processed image, 'fun name')]
-def process_filters(image, filters_dict):
+
+def process_filters(image, image_name='name', filters_dict={}):
 
     image_temp = image
-    image_process_pipe_lst = []
+    image_process_pipe_lst = [(image, image_name)]
     # if no filtering funs
     if not filters_funs_d:
         return image
@@ -151,24 +152,59 @@ def process_filters(image, filters_dict):
                 args = param
                 image_temp = f(image_temp, *args)
                 image_process_pipe_lst.append((image_temp, f.__name__))
+
         return image_process_pipe_lst
 
 
-img = mpimg.imread(test_images_fullpath_list[0])
 
-processed_image_pipe_lst = process_filters(img,filters_funs_d)
 
-processed_image = processed_image_pipe_lst[2][0]
-processed_image_filter_name = processed_image_pipe_lst[2][1]
+def plot_filters(image_pipe_lst, fgs=(20, 10)):
 
-plt.figure()
-cmap = None
-if len(processed_image.shape) == 2:
-    cmap = 'gray'
-plt.imshow(processed_image, cmap=cmap)
-plt.title(processed_image_filter_name)
-plt.show()
+    colormap = None
+    cols = len(image_pipe_lst)
+    plt.figure(figsize=fgs)
 
-improcsess(test_images_fullpath_list[0],test_images_lst[0],filters_funs_d)
+    for idx, img_tuple in enumerate(image_pipe_lst):
+        if len(img_tuple[0].shape) == 2:
+            colormap = 'gray'
+        plt.subplot(1, cols, idx + 1)
+        plt.title(img_tuple[1])
+        plt.imshow(img_tuple[0], cmap=colormap)
+    plt.show()
 
-plot_improcsess(test_images_fullpath_list[0],test_images_lst[0],filters_funs_d)
+
+#TODO
+
+# create image list
+image_list = []
+image_name_list = []
+for idx,image_file in enumerate(test_images_fullpath_list):
+
+    image_list.append(mpimg.imread(test_images_fullpath_list[idx]))
+    image_name_list.append(str(test_images_fullpath_list[idx]).split('/')[1])
+
+
+processed_images_lst=[]
+for image,image_name in zip(image_list, image_name_list):
+    processed_images_lst.append(process_filters(image,image_name,filters_funs_d))
+
+
+print(len(processed_images_lst))
+print(len(processed_images_lst[0]))
+
+def plot_pipes(processed_images_lst, fgs=(20, 15)):
+    rows = len(processed_images_lst)
+    cols = len(processed_images_lst[0])
+    plt.figure(figsize=fgs)
+    colormap = None
+    for jx,image_pipe_lst in enumerate(processed_images_lst):
+        for idx, img_tuple in enumerate(image_pipe_lst):
+            if len(img_tuple[0].shape) == 2:
+                colormap = 'gray'
+            plt.subplot(rows, cols, (idx + 1)+(jx*4))
+            plt.title(img_tuple[1])
+            plt.imshow(img_tuple[0], cmap=colormap)
+    plt.tight_layout()
+    plt.show()
+
+plot_pipes(processed_images_lst, fgs=(20, 10))
