@@ -35,15 +35,11 @@ if (gbsize%2==0):
 
 
 def process_filters(image_in, image_name_in, filters_dict):
-
     image_temp = image_in
     image_process_pipe_lst = [(image_in, image_name_in)]
     # if no filtering funs
-    if not filters_funs_d:
-        return image_in
-    else:
+    if filters_dict:
         for idx, (f, param) in enumerate(filters_dict.items()):
-
             if param == 'none':
                 image_temp = f(image_temp)
                 image_process_pipe_lst.append((image_temp, f.__name__))
