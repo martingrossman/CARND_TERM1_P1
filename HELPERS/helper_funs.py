@@ -319,7 +319,7 @@ def hough_lines(img, rho, theta, threshold, min_line_len, max_line_gap, lines_pr
                                 maxLineGap=max_line_gap)
     line_img = np.zeros((img.shape[0], img.shape[1], 3), dtype=np.uint8)
     new_lines = draw_lines(line_img, lines_raw, lines_previous)
-    return line_img#, lines_raw, new_lines
+    return line_img, lines_raw, new_lines
 
 
 def weighted_img(img, initial_img, α=0.8, β=1., λ=0.):
