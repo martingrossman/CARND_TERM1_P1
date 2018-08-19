@@ -32,13 +32,13 @@ def process_video(video_in_path, video_out_path, pipeline, show_video=True):
         """.format(video_out_path)))
 
 
-
-
 def dir_content_lst(dir_path):
     return [image for image in os.listdir(dir_path)]
 
+
 def dir_content_fullpath_lst(dir_path):
     return [os.path.join(dir_path, filename) for filename in os.listdir(dir_path)]
+
 
 def grayscale(img):
     """Applies the Grayscale transform
@@ -55,9 +55,11 @@ def canny(img, low_threshold, high_threshold):
     """Applies the Canny transform"""
     return cv2.Canny(img, low_threshold, high_threshold)
 
+
 def gaussian_blur(img, kernel_size):
     """Applies a Gaussian Noise kernel"""
     return cv2.GaussianBlur(img, (kernel_size, kernel_size), 0)
+
 
 def region_of_interest(img, vertices):
     """
@@ -180,9 +182,15 @@ def process_filters(image_in, image_name_in='name', filters_dict=[]):
                 #print(image_temp)
                 image_temp = f(image_temp, image_in)
                 image_process_pipe_lst.append((image_temp, f.__name__))
+            # elif f.__name__=='hough_lines':
+            #     args = param
+            #     image_temp = f(image_temp, *args)
+            #     image_process_pipe_lst.append((image_temp[0], f.__name__))
             else:
                 args = param
                 image_temp = f(image_temp, *args)
+                if isinstance(image_temp, tuple):
+                    image_temp = image_temp[0]
                 image_process_pipe_lst.append((image_temp, f.__name__))
 
     return image_process_pipe_lst
@@ -320,10 +328,11 @@ def hough_lines(img, rho, theta, threshold, min_line_len, max_line_gap, lines_pr
                                 maxLineGap=max_line_gap)
     line_img = np.zeros((img.shape[0], img.shape[1], 3), dtype=np.uint8)
     new_lines = draw_lines(line_img, lines_raw, lines_previous)
-    return line_img#, lines_raw, new_lines
+    return line_img, lines_raw, new_lines
 
 
 def weighted_img(img, initial_img, α=0.8, β=1., λ=0.):
+    print(type(img),type(initial_img))
     """
     `img` is the output of the hough_lines(), An image with lines drawn on it.
     Should be a blank image (all black) with lines drawn on it.

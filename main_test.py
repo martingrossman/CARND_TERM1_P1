@@ -60,7 +60,7 @@ processed_images_lst=[hf.process_filters(image, image_name, filters_funs_d)
 
 
 # Printing
-b=(0, 1, 2, 7) # select which filter to plot
+b=(0, 1, 7) # select which filter to plot
 processed_images_lst_sel = [itemgetter(*b)(sublist) for sublist in processed_images_lst]
 hf.plot_pipes(processed_images_lst_sel, fgs=(20, 10))
 
@@ -105,9 +105,9 @@ def process_video(video_in_path,video_out_path,pipeline,show_video=True):
         </video>
         """.format(video_out_path)))
 
-lines_previous=np.array([])
-counter = 0
-
-from moviepy.editor import VideoFileClip
-from IPython.display import HTML
-process_video('test_videos/solidYellowLeft.mp4',"test_videos_output/solidWhiteRight5.mp4",process_pipeline0)
+# lines_previous=np.array([])
+# counter = 0
+#
+# from moviepy.editor import VideoFileClip
+# from IPython.display import HTML
+# process_video('test_videos/solidYellowLeft.mp4',"test_videos_output/solidWhiteRight5.mp4",process_pipeline0)
