@@ -24,10 +24,10 @@ if gbsize%2 == 0:
     gbsize = gbsize + 1
 
 hough_rho = 1
-hough_theta = np.pi / 180
-hough_threshold = 20
-hough_min_line_length = 40
-hough_max_line_gap = 200
+hough_theta = np.pi / 90
+hough_threshold = 15
+hough_min_line_length = 70
+hough_max_line_gap = 180
 lines_previous = np.array([])
 
 
@@ -36,14 +36,14 @@ lines_previous = np.array([])
 # needs to be ordered to fix the order (no need in 3.6 up)
 filters_funs_d = OrderedDict()
 
-filters_funs_d[hf.select_white_yellow_L] = 'none'
+filters_funs_d[hf.select_rgb_yellow] = 'none'
 filters_funs_d[hf.grayscale] = 'none'
 filters_funs_d[hf.gaussian_blur] = (gbsize,) #needs to be tuple ()
 filters_funs_d[hf.canny] = (canny_low, canny_high)
 filters_funs_d[hf.region_of_interest] = 'none'
-filters_funs_d[hf.hough_lines] = (hough_rho, hough_theta, hough_threshold,
-                                 hough_min_line_length, hough_max_line_gap, lines_previous)
-filters_funs_d[hf.weighted_img] = 'image'
+# filters_funs_d[hf.hough_lines] = (hough_rho, hough_theta, hough_threshold,
+#                                  hough_min_line_length, hough_max_line_gap, lines_previous)
+# filters_funs_d[hf.weighted_img] = 'image'
 
 # create image list
 image_list = [mpimg.imread(test_images_fullpath_list[idx])
@@ -61,13 +61,16 @@ processed_images_lst=[hf.process_filters(image, image_name, filters_funs_d)
 
 # Printing
 b=(0, 1, 7) # select which filter to plot
-processed_images_lst_sel = [itemgetter(*b)(sublist) for sublist in processed_images_lst]
-hf.plot_pipes(processed_images_lst_sel, fgs=(20, 10))
+#processed_images_lst_sel = [itemgetter(*b)(sublist) for sublist in processed_images_lst]
+#hf.plot_pipes(processed_images_lst_sel, fgs=(20, 10))
 
+
+counter = 0
 
 def process_pipeline0(img):
     global counter
     counter = counter + 1
+    print(counter)
     global lines_previous
     # image = mpimg.imread(img)
     image = img
@@ -81,7 +84,7 @@ def process_pipeline0(img):
     hough_min_line_length = 40
     hough_max_line_gap = 200
     hough_img, lines_raw, lines_new = hf.hough_lines(masked_img, hough_rho, hough_theta, hough_threshold,
-                                                     hough_min_line_length, hough_max_line_gap, lines_previous)
+                                                     hough_min_line_length, hough_max_line_gap, lines_previous,counter)
     # result
 
     result = hf.weighted_img(hough_img, image)
@@ -89,6 +92,8 @@ def process_pipeline0(img):
     # result = np.dstack(3*[masked_img]).astype('uint8')
 
     return result
+
+
 
 def process_video(video_in_path,video_out_path,pipeline,show_video=True):
 
@@ -105,9 +110,11 @@ def process_video(video_in_path,video_out_path,pipeline,show_video=True):
         </video>
         """.format(video_out_path)))
 
-# lines_previous=np.array([])
-# counter = 0
-#
-# from moviepy.editor import VideoFileClip
-# from IPython.display import HTML
-# process_video('test_videos/solidYellowLeft.mp4',"test_videos_output/solidWhiteRight5.mp4",process_pipeline0)
+lines_previous=np.array([])
+
+
+from moviepy.editor import VideoFileClip
+from IPython.display import HTML
+#process_video('test_videos/solidYellowLeft.mp4',"test_videos_output/solidYellowLeft.mp4",process_pipeline0)
+#process_video('test_videos/solidWhiteRight.mp4',"test_videos_output/solidWhiteRight.mp4",process_pipeline0)
+process_video('test_videos/challenge.mp4',"test_videos_output/challenge.mp4",process_pipeline0)

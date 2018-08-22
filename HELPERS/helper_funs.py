@@ -226,143 +226,128 @@ def plot_pipes(processed_images_lst, fgs=(20, 15)):
     plt.tight_layout()
     plt.show()
 
-def avg_lines_by_points(lines):
-    start_x = lines[:, 0, 0]
-    start_y = lines[:, 0, 1]
-    end_x = lines[:, 0, 2]
-    end_y = lines[:, 0, 3]
-    return [start_x.mean(),start_y.mean(),end_x.mean(),end_y.mean()]
+def avg_lines_by_points(lines, weights=[], weighted=True):
+    if len(lines):
+        #global counter
+       # print(counter)
+        start_x = lines[:, 0, 0]
+        start_y = lines[:, 0, 1]
+        end_x = lines[:, 0, 2]
+        end_y = lines[:, 0, 3]
 
-def draw_lines(img, lines, lines_previous, color=[255, 0, 0], thickness=13, counter=0):
-    """
-    NOTE: this is the function you might want to use as a starting point once you want to
-    average/extrapolate the line segments you detect to map out the full
-    extent of the lane (going from the result shown in raw-lines-example.mp4
-    to that shown in P1_example.mp4).
+        if weighted & len(weights)>1:
+            x1= np.average(start_x,weights=weights)
+            y1 = np.average(start_y, weights=weights)
+            x2 = np.average(end_x, weights=weights)
+            y2 = np.average(end_y, weights=weights)
+        else:
+            x1 = start_x.mean()
+            y1 = start_y.mean()
+            x2 = end_x.mean()
+            y2 = end_y.mean()
+    else:
+        x1 = []
+        y1 = []
+        x2 = []
+        y2 = []
 
-    Think about things like separating line segments by their
-    slope ((y2-y1)/(x2-x1)) to decide which segments are part of the left
-    line vs. the right line.  Then, you can average the position of each of
-    the lines and extrapolate to the top and bottom of the lane.
+    return [x1,y1,x2,y2]
 
-    This function draws `lines` with `color` and `thickness`.
-    Lines are drawn on the image inplace (mutates the image).
-    If you want to make the lines semi-transparent, think about combining
-    this function with the weighted_img() function below
-    """
+def line_kq_from_pts(line_pts):
+    if len(line_pts):
+        k =(line_pts[3]-line_pts[1])/(line_pts[2]-line_pts[0])
+        q = line_pts[1] - k* line_pts[0]
+    else:
+        k = []
+        q = []
+    return(k,q)
+
+def draw_lines(img, hlines, lines_previous, color=[255, 0, 0], thickness=13,counter=0):
+
+    print('counter:{}'.format(counter))
     x_size = img.shape[1]
     y_size = img.shape[0]
+    horizon = y_size * 0.65
 
-    #get start and endpoints
-    # start_points = lines[0:4, 0, 0:2]
-    # end_points = lines[0:4,0,2:4]
-    # start_points_x = start_points[:, 0]
-    # start_points_y = start_points[:, 1]
-    # start_points_x.mean()
-
-    lines_slope_angle_intercept = np.zeros(shape=(len(lines), 3))
-    lines_slope_angle = np.zeros(shape=(len(lines), 2))
-
-    lines_start_points = np.zeros(shape=(len(lines), 2))
-    lines_end_points = np.zeros(shape=(len(lines), 2))
-    left_lines = []
-    right_lines = []
-
-    for id, line in enumerate(lines):
+    left_hlines = []
+    left_hlines_len = []
+    right_hlines = []
+    right_hlines_len = []
+    left_hlines_kq = []
+    righ_hlines_kq = []
+    # sort left, right hlines
+    for index, line in enumerate(hlines):
         for x1, y1, x2, y2 in line:
-            lines_start_points[id] = [x1, y1]
-            lines_end_points[id] = [x2, y2]
-
-    # find slopes, angles, intercepts
-    # divide to left right lines
-    for index, line in enumerate(lines):
-        for x1, y1, x2, y2 in line:
-            slope =(y2 - y1)/(x2 - x1)
+            slope = (y2 - y1) / (x2 - x1)
             angle = np.arctan2((y2 - y1), (x2 - x1))
             intercept = y1 - x1 * slope
-            lines_slope_angle_intercept[index] = [slope, angle, intercept]
-            if slope < 0:
-                left_lines.append(line)
-            else:
-                right_lines.append(line)
+            line_len = np.sqrt((y2 - y1) ** 2 + (x2 - x1) ** 2)
+            if abs(slope)>0.5:
+                if slope < 0:
+                    #print('left slope: {}'.format(slope))
+                    left_hlines.append([[x1, y1, x2, y2]])
+                    left_hlines_len.append(line_len)
+                else:
+                    #print('right slope: {}'.format(slope))
+                    right_hlines.append([[x1, y1, x2, y2]])
+                    right_hlines_len.append(line_len)
+    #case of no lines
+    if not len(left_hlines):
+        left_hlines = np.array([[lines_previous[0]]])
 
-    left_lines = np.array(left_lines)
-    right_lines = np.array(right_lines)
+    # numpy array
+    left_hlines = np.array(left_hlines)
+    right_hlines = np.array(right_hlines)
 
-    # average left lines
+    left_hlines_len = np.array(left_hlines_len)
+    right_hlines_len = np.array(right_hlines_len)
 
+    # avg lines
+    left_line_pts = avg_lines_by_points(left_hlines, weights=left_hlines_len, weighted=True )
+    right_line_pts = avg_lines_by_points(right_hlines,weights=right_hlines_len,weighted=True)
 
-    left_line = avg_lines_by_points(left_lines)
-    right_line = avg_lines_by_points(right_lines)
+    # result lines 0=left,1=right
+    new_lines = np.zeros(shape=(2, 4), dtype=np.int32)
 
+    # left
+    # y = kx+q -> x=
+    k, q = line_kq_from_pts(left_line_pts)
+    left_bottom_x = (y_size - q) / k
+    left_top_x = (horizon - q) / k
+    if (left_bottom_x >= 0):
+        new_lines[0] = [left_bottom_x, y_size, left_top_x, horizon]
+    # right
+    k, q = line_kq_from_pts(right_line_pts)
+    right_bottom_x = (y_size - q) / k
+    right_top_x = (horizon - q) / k
+    if (right_bottom_x <= x_size):
+        new_lines[1] = [right_bottom_x, y_size, right_top_x, horizon]
 
-
-
-    max_slope_line = lines_slope_angle_intercept[lines_slope_angle_intercept.argmax(axis=0)[0]]
-    min_slope_line = lines_slope_angle_intercept[lines_slope_angle_intercept.argmin(axis=0)[0]]
-
-    left_slopes_angles_intercepts
-    left_slopes = []
-    left_intercepts = []
-    right_slopes = []
-    right_intercepts = []
-    left_angles = []
-    right_angles = []
-    # this gets slopes and intercepts of lines similar to the lines with the max (immediate left) and min
-    # (immediate right) slopes (i.e. slope and intercept within x%)
-    for line, angle in zip(lines_slope_intercept, lines_slope_angle):
-        if abs(line[0] - max_slope_line[0]) < 0.15 and abs(line[1] - max_slope_line[1]) < (0.15 * x_size):
-            left_slopes.append(line[0])
-            left_intercepts.append(line[1])
-            left_angles.append(angle[0])
-
-        elif abs(line[0] - min_slope_line[0]) < 0.15 and abs(line[1] - min_slope_line[1]) < (0.15 * x_size):
-            right_slopes.append(line[0])
-            right_intercepts.append(line[1])
-            right_angles.append(angle[0])
-    # print(np.rad2deg(right_angles),right_slopes)
-
-    # left and right lines are averages of these slopes and intercepts, extrapolate lines to edges and center*
-    # *roughly
-    new_lines = np.zeros(shape=(1, 2, 4), dtype=np.int32)
-    if len(left_slopes) > 0:
-        #left_line = [sum(left_slopes) / len(left_slopes), sum(left_intercepts) / len(left_intercepts)]
-        #left_line = [np.tan(sum(left_angles) / len(left_angles)), sum(left_intercepts) / len(left_intercepts)]  # MG
-        left_bottom_x = (y_size - left_line[1]) / left_line[0]
-        left_top_x = (y_size * .575 - left_line[1]) / left_line[0]
-        if (left_bottom_x >= 0):
-            new_lines[0][0] = [left_bottom_x, y_size, left_top_x, y_size * .575]
-    if len(right_slopes) > 0:
-        right_line = [sum(right_slopes) / len(right_slopes), sum(right_intercepts) / len(right_intercepts)]
-        right_line = [np.tan(sum(right_angles) / len(right_angles)),
-                      sum(right_intercepts) / len(right_intercepts)]  # MG
-        right_bottom_x = (y_size - right_line[1]) / right_line[0]
-        right_top_x = (y_size * .575 - right_line[1]) / right_line[0]
-        if (right_bottom_x <= x_size):
-            new_lines[0][1] = [right_bottom_x, y_size, right_top_x, y_size * .575]
-
+    #lines_previous = np.array([])
+    #counter = 100
     if lines_previous.size == 0:
         x = 0
     else:
-        # print('left:',lines_previous[0][0][0])
-        # print('left:',lines_previous[0][0][2])
-        if counter < 20:
-            alfa = 0.99
+
+        if counter < 0:
+            alfa = 0.15
         else:
             alfa = 0.15
-        new_lines[0][0][0] = new_lines[0][0][0] * alfa + lines_previous[0][0][0] * (1 - alfa)
-        new_lines[0][0][2] = new_lines[0][0][2] * alfa + lines_previous[0][0][2] * (1 - alfa)
-        new_lines[0][1][0] = new_lines[0][1][0] * alfa + lines_previous[0][1][0] * (1 - alfa)
-        new_lines[0][1][2] = new_lines[0][1][2] * alfa + lines_previous[0][1][2] * (1 - alfa)
+        new_lines[0][0] = new_lines[0][0] * alfa + lines_previous[0][0] * (1 - alfa)
+        new_lines[0][2] = new_lines[0][2] * alfa + lines_previous[0][2] * (1 - alfa)
+        new_lines[1][0] = new_lines[1][0] * alfa + lines_previous[1][0] * (1 - alfa)
+        new_lines[1][2] = new_lines[1][2] * alfa + lines_previous[1][2] * (1 - alfa)
         # print(alfa)
     for line in new_lines:
-        for x1, y1, x2, y2 in line:
-            cv2.line(img, (x1, y1), (x2, y2), color, thickness)
+        cv2.line(img, (line[0], line[1]), (line[2], line[3]), color, thickness)
 
     return new_lines
 
 
-def hough_lines(img, rho, theta, threshold, min_line_len, max_line_gap, lines_previous):
+
+
+
+def hough_lines(img, rho, theta, threshold, min_line_len, max_line_gap, lines_previous,counter):
     """
     `img` should be the output of a Canny transform.
 
@@ -370,15 +355,16 @@ def hough_lines(img, rho, theta, threshold, min_line_len, max_line_gap, lines_pr
     """
     lines_raw = cv2.HoughLinesP(img, rho, theta, threshold, np.array([]), minLineLength=min_line_len,
                                 maxLineGap=max_line_gap)
-    line_img = np.zeros((img.shape[0], img.shape[1], 3), dtype=np.uint8)
-    new_lines = draw_lines(line_img, lines_raw, lines_previous)
 
-    weighted_img (line_img, initial_img, α=0.8, β=1., λ=0.)
+    line_img = np.zeros((img.shape[0], img.shape[1], 3), dtype=np.uint8)
+    new_lines = draw_lines(line_img, lines_raw, lines_previous,counter=counter)
+
+
     return line_img, lines_raw, new_lines
 
 
 def weighted_img(img, initial_img, α=0.8, β=1., λ=0.):
-    print(type(img),type(initial_img))
+    #print(type(img),type(initial_img))
     """
     `img` is the output of the hough_lines(), An image with lines drawn on it.
     Should be a blank image (all black) with lines drawn on it.
