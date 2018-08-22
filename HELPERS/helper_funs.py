@@ -98,30 +98,24 @@ def select_rgb_yellow(image):
     masked = cv2.bitwise_and(image, image, mask=yellow_mask)
     return masked
 
-def convert_lab(image):
+def convert_to_lab(image):
     return cv2.cvtColor(image, cv2.COLOR_RGB2LAB)
 
 
 def select_white_yellow_L(image):
-    converted = convert_lab(image)
 
-    gray_img = grayscale(image)
-    subdued_gray = (gray_img / 2).astype('uint8')
+    converted = convert_to_lab(image)
 
-    # white color mask
-    d = 15
+    # white mask
+    d = 25
     lower = np.uint8([210, -d + 128, -d + 128])
     upper = np.uint8([255, d + 128, d + 128])
     white_mask = cv2.inRange(converted, lower, upper)
-    # yellow color mask
+    # yellow  mask
     lower = np.uint8([128, -28 + 128, 30 + 128])
     upper = np.uint8([255, 28 + 128, 255])
     yellow_mask = cv2.inRange(converted, lower, upper)
-
-    # combine the mask
-    # mask = cv2.bitwise_or(white_mask, yellow_mask)
     mask = cv2.bitwise_or(yellow_mask, white_mask)
-    mask2 = cv2.bitwise_or(subdued_gray, mask)
 
     return cv2.bitwise_and(image, image, mask=mask)
 
@@ -168,8 +162,10 @@ def plot_imfiles(imnames_lst,images_im,cmap=None,title=''):
         plt.imshow(image_im,cmap=cmap)
     #plt.tight_layout()
 
+
 def process_filters(image_in, image_name_in='name', filters_dict=[]):
     # process image in by applying filters in filters_dict
+
     image_temp = image_in
     image_process_pipe_lst = [(image_in, image_name_in)]
     # if no filtering funs
@@ -195,6 +191,7 @@ def process_filters(image_in, image_name_in='name', filters_dict=[]):
 
     return image_process_pipe_lst
 
+
 def plot_filters(image_pipe_lst, fgs=(20, 10)):
     # plot filter for one image
     colormap = None
@@ -208,6 +205,7 @@ def plot_filters(image_pipe_lst, fgs=(20, 10)):
         plt.title(img_tuple[1])
         plt.imshow(img_tuple[0], cmap=colormap)
     plt.show()
+
 
 def plot_pipes(processed_images_lst, fgs=(20, 15)):
     # plots filters on all images in processed_images_lst
@@ -226,10 +224,10 @@ def plot_pipes(processed_images_lst, fgs=(20, 15)):
     plt.tight_layout()
     plt.show()
 
+
 def avg_lines_by_points(lines, weights=[], weighted=True):
+
     if len(lines):
-        #global counter
-       # print(counter)
         start_x = lines[:, 0, 0]
         start_y = lines[:, 0, 1]
         end_x = lines[:, 0, 2]
@@ -253,28 +251,27 @@ def avg_lines_by_points(lines, weights=[], weighted=True):
 
     return [x1,y1,x2,y2]
 
+
 def line_kq_from_pts(line_pts):
-    if len(line_pts):
-        k =(line_pts[3]-line_pts[1])/(line_pts[2]-line_pts[0])
-        q = line_pts[1] - k* line_pts[0]
-    else:
-        k = []
-        q = []
+    k =(line_pts[3]-line_pts[1])/(line_pts[2]-line_pts[0])
+    q = line_pts[1] - k * line_pts[0]
     return(k,q)
 
-def draw_lines(img, hlines, lines_previous, color=[255, 0, 0], thickness=13,counter=0):
 
-    print('counter:{}'.format(counter))
+def draw_lines(img, hlines, lines_previous, color=[255, 0, 0], thickness=13, counter=0):
+    # hlines is result of hough function 3d array
+    # img to draw on
+    # lines_previous  - previously infered lines
     x_size = img.shape[1]
     y_size = img.shape[0]
-    horizon = y_size * 0.65
+
+    horizon_height = y_size * 0.6
 
     left_hlines = []
     left_hlines_len = []
     right_hlines = []
     right_hlines_len = []
-    left_hlines_kq = []
-    righ_hlines_kq = []
+
     # sort left, right hlines
     for index, line in enumerate(hlines):
         for x1, y1, x2, y2 in line:
@@ -282,70 +279,67 @@ def draw_lines(img, hlines, lines_previous, color=[255, 0, 0], thickness=13,coun
             angle = np.arctan2((y2 - y1), (x2 - x1))
             intercept = y1 - x1 * slope
             line_len = np.sqrt((y2 - y1) ** 2 + (x2 - x1) ** 2)
-            if abs(slope)>0.5:
+            if (abs(slope) > 0.2) & (abs(slope) < 0.8):
                 if slope < 0:
-                    #print('left slope: {}'.format(slope))
+                    # print('left slope: {}'.format(slope))
                     left_hlines.append([[x1, y1, x2, y2]])
                     left_hlines_len.append(line_len)
                 else:
-                    #print('right slope: {}'.format(slope))
+                    # print('right slope: {}'.format(slope))
                     right_hlines.append([[x1, y1, x2, y2]])
                     right_hlines_len.append(line_len)
-    #case of no lines
+
+    # case of no lines check use previous
     if not len(left_hlines):
         left_hlines = np.array([[lines_previous[0]]])
+    if not len(right_hlines):
+        right_hlines = np.array([[lines_previous[1]]])
 
-    # numpy array
+    # numpy arrays
     left_hlines = np.array(left_hlines)
     right_hlines = np.array(right_hlines)
-
     left_hlines_len = np.array(left_hlines_len)
     right_hlines_len = np.array(right_hlines_len)
 
-    # avg lines
-    left_line_pts = avg_lines_by_points(left_hlines, weights=left_hlines_len, weighted=True )
-    right_line_pts = avg_lines_by_points(right_hlines,weights=right_hlines_len,weighted=True)
+    # averaging lines by points, weighted by length
+    left_line_pts = avg_lines_by_points(left_hlines, weights=left_hlines_len, weighted=True)
+    right_line_pts = avg_lines_by_points(right_hlines, weights=right_hlines_len, weighted=True)
 
-    # result lines 0=left,1=right
+    # Bottom and top stretching of line
+    # Result lines  0=left, 1=right new lines
     new_lines = np.zeros(shape=(2, 4), dtype=np.int32)
-
     # left
-    # y = kx+q -> x=
     k, q = line_kq_from_pts(left_line_pts)
     left_bottom_x = (y_size - q) / k
-    left_top_x = (horizon - q) / k
-    if (left_bottom_x >= 0):
-        new_lines[0] = [left_bottom_x, y_size, left_top_x, horizon]
+    left_top_x = (horizon_height - q) / k
+    if left_bottom_x >= 0:
+        new_lines[0] = [left_bottom_x, y_size, left_top_x, horizon_height]
     # right
     k, q = line_kq_from_pts(right_line_pts)
     right_bottom_x = (y_size - q) / k
-    right_top_x = (horizon - q) / k
-    if (right_bottom_x <= x_size):
-        new_lines[1] = [right_bottom_x, y_size, right_top_x, horizon]
+    right_top_x = (horizon_height - q) / k
+    if right_bottom_x <= x_size:
+        new_lines[1] = [right_bottom_x, y_size, right_top_x, horizon_height]
 
-    #lines_previous = np.array([])
-    #counter = 100
-    if lines_previous.size == 0:
-        x = 0
-    else:
+    # Low pass filtering
+    if not lines_previous.size == 0:
 
-        if counter < 0:
-            alfa = 0.15
+        if counter < 5:
+            # At the begining almost no filtering #TODO functional dependence
+            alfa = 0.9
         else:
-            alfa = 0.15
+            # low pass filter on x values
+            alfa = 0.12
         new_lines[0][0] = new_lines[0][0] * alfa + lines_previous[0][0] * (1 - alfa)
         new_lines[0][2] = new_lines[0][2] * alfa + lines_previous[0][2] * (1 - alfa)
         new_lines[1][0] = new_lines[1][0] * alfa + lines_previous[1][0] * (1 - alfa)
         new_lines[1][2] = new_lines[1][2] * alfa + lines_previous[1][2] * (1 - alfa)
-        # print(alfa)
+
+    # Draw lines
     for line in new_lines:
         cv2.line(img, (line[0], line[1]), (line[2], line[3]), color, thickness)
 
     return new_lines
-
-
-
-
 
 def hough_lines(img, rho, theta, threshold, min_line_len, max_line_gap, lines_previous,counter):
     """
