@@ -47,11 +47,11 @@ Processing of each individual frame is the core of this project. It can be divid
 
 The program flow chart is depicted below:
 
-!['flow diagram'](C:\Users\martin_dev\Documents\UDACITY_ND\CarND-LaneLines-P1\documentation\flow_1.png)
+!['flow diagram'](./documentation/flow_1.png)
 
 
 
-![](C:\Users\martin_dev\Documents\UDACITY_ND\CarND-LaneLines-P1\documentation\hough_lines.png)
+!['hough_lines()'](./documentation/hough_lines.png)
 
 
 
@@ -59,9 +59,9 @@ The program flow chart is depicted below:
 
 On internet I saw many people are averaging slopes of individual lines to average lines. This is in principle not correct. As line average is not mathematically defined I assume the output of such function should provide for two lines with different slopes a line with slope at which the new line divides angle of the input lines into half. Averaging of different slopes doesn't provide such result. (e.g. if line1 has slope >> 0 while line 2 has slope = 1, their average is still very high (k1+k2)/2 >>0 ) Therefore I decided to average x,y of start points and end points of the lines separately. Please see image below.
 
-![](C:\Users\martin_dev\Documents\UDACITY_ND\CarND-LaneLines-P1\documentation\LineAveragingDisimilar.png)
+![](./documentation/LineAveragingDisimilar.png)
 
-![](C:\Users\martin_dev\Documents\UDACITY_ND\CarND-LaneLines-P1\documentation\LineAveragingSimilar.png)
+![](./documentation/LineAveragingSimilar.png)
 
 
 
